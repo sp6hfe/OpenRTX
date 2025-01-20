@@ -2481,7 +2481,9 @@ void ui_updateFSM(bool *sync_rtx)
         }
 #endif //            CONFIG_GPS
 
-        if (txOngoing || rtx_rxSquelchOpen())
+        if (txOngoing ||
+            rtx_rxSquelchOpen() ||
+            (state.volume != last_state.volume))
         {
             _ui_exitStandby(now);
             return;
