@@ -74,3 +74,37 @@ void dsp_invertPhase(audio_sample_t *buffer, uint16_t length)
         buffer[i] = -buffer[i];
     }
 }
+
+void dsp_pwrSquelchInit(struct pwrSquelch *sq)
+{
+    sq->filtOut = 0;
+    sq->gate = false;
+
+}
+
+uint16_t dsp_pwrSquelchUpdate(struct pwrSquelch *sq, int16_t sample,
+                              uint16_t alpha)
+{
+    uint32_t energy;
+    uint32_t filtOut;
+    uint16_t alphaComp = 0xFFFF - alpha;
+
+    energy = sample * sample;
+    energy = ((energy + 32768) >> 16);
+    filtOut = ((energy * alpha) >> 16) + ((sq->filtOut * alphaComp) >> 16);
+    sq->filtOut = filtOut;
+
+    return filtOut;
+}
+
+bool dsp_pwrSquelchEvaluate(struct pwrSquelch *sq, uint16_t openThr,
+                            uint16_t closeThr)
+{
+    if((sq->filtOut >= openThr) && (sq->gate == false))
+        sq->gate = true;
+
+    if((sq->filtOut <= closeThr) && (sq->gate == true))
+        sq->gate = false;
+
+    return sq->gate;
+}

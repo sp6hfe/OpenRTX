@@ -47,7 +47,6 @@ typedef struct
 }
 filter_state_t;
 
-
 /**
  * Reset the filter state variables.
  *
@@ -73,6 +72,47 @@ void dsp_dcRemoval(filter_state_t *state, audio_sample_t *buffer, size_t length)
  * @param length: the length of the input buffer.
  */
 void dsp_invertPhase(audio_sample_t *buffer, uint16_t length);
+
+/**
+ * Data structure holding the internal state of a signal power squelch gate.
+ */
+struct pwrSquelch {
+    uint32_t filtOut;
+    bool gate;
+};
+
+/**
+ * Initialize the internal state of a signal power squelch gate.
+ *
+ * @param sq: pointer to state data structure.
+ */
+void dsp_pwrSquelchInit(struct pwrSquelch *sq);
+
+/**
+ * Update the internal state of a signal power squelch gate.
+ * The outut of the envelope filter is the normalized signal power, ranging
+ * from 0 to 65535.
+ *
+ * @param sq: pointer to state data structure.
+ * @param sample: new data sample.
+ * @param alpha: time constant for the envelope lowpass filter.
+ * @return filter output after update.
+ */
+uint16_t dsp_pwrSquelchUpdate(struct pwrSquelch *sq, int16_t sample,
+                              uint16_t alpha);
+
+/**
+ * Evaluate the gate conditions of a signal power squelch gate.
+ * The squelch gate opens if the current envelope is greater than openThr and
+ * closes if lower than closeThr.
+ *
+ * @param sq: pointer to state data structure.
+ * @param openThr: gate opening threshold.
+ * @param closeThr: gate closing threshold.
+ * @return gate state.
+ */
+bool dsp_pwrSquelchEvaluate(struct pwrSquelch *sq, uint16_t openThr,
+                            uint16_t closeThr);
 
 #ifdef __cplusplus
 }
